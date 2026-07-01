@@ -1,0 +1,105 @@
+---
+description: TikZ/PGF figure creation — apply when writing or editing TikZ code, creating diagrams, or designing any figure
+globs:
+  - "*.tex"
+alwaysApply: false
+---
+
+# TikZ Figure Rules
+
+`arrows.meta` and `calc` are already loaded by `style.sty`. Add `positioning` to the document preamble for any figure with multiple nodes:
+
+```latex
+\usetikzlibrary{positioning}
+```
+
+## Absolute Rule: No Hardcoded Coordinates
+
+```latex
+% FORBIDDEN — never write positions like these:
+\draw (2.3, 1.7) -- (4, 0.5);
+\node at (3, 2) {text};
+```
+
+The only permitted absolute coordinate is an explicit origin anchor:
+```latex
+\coordinate (origin) at (0, 0);
+```
+
+Everything else must be relative to a named node or derived via `calc`.
+
+## Required Patterns
+
+### Node Spacing
+```latex
+\begin{tikzpicture}[node distance=2em]
+  \node[circle, draw] (v) {$v$};
+  \node[circle, draw, right=3em of v] (u) {$u$};
+  \node[circle, draw, below=2em of v] (w) {$w$};
+\end{tikzpicture}
+```
+
+### Relative Offsets (`calc` library)
+```latex
+\node at ($(v)+(0, 2em)$) {label};
+\coordinate (mid) at ($(A)!0.5!(B)$);            % midpoint
+\coordinate (pt)  at ($(A)!0.5!(B)+(0, 1em)$);   % midpoint + offset
+```
+
+### Repeated Elements — Always Use `\foreach`
+```latex
+% Row of nodes (never copy-paste with different numbers):
+\foreach \i in {0, 1, 2, 3} {
+    \node[circle, draw, minimum size=1.5em]
+        (h-\i) [right={\i * 2.5em} of origin] {$h_{\i}$};
+}
+
+% Connect consecutive nodes:
+\foreach \i [remember=\i as \lasti (initially 0)] in {1, 2, 3} {
+    \draw[-{Latex}] (h-\lasti) -- (h-\i);
+}
+```
+
+### Arrows (`arrows.meta` already loaded)
+```latex
+\draw[-{Latex}] (A) -- (B);
+\draw[-{Stealth[scale=1.2]}] (A) to[bend left=20] (B);
+\draw[{Circle}-{Latex}] (A) -- (B);
+```
+
+## Node Naming Convention
+
+Use names that match the math:
+- `node-v`, `neighbor-u`, `graph-G` for graph elements
+- `input-layer`, `hidden-1`, `hidden-2`, `output-layer` for neural networks
+- `feature-x`, `message-m`, `agg-h` for GNN operations
+
+Never use: `n1`, `n2`, `v1`, `v2`, `a`, `b`, `temp`
+
+## Self-Check Before Finalizing
+
+Scan the code for patterns matching `(\d+\.?\d*,\s*\d+\.?\d*)` — numeric coordinate pairs. The only allowed occurrence is `\coordinate (origin) at (0, 0)`. If any others exist, refactor them to use named-node positioning before outputting.
+
+## File Organization
+
+Each figure goes in its own file in `tikz-figs/`, named to match the content:
+
+```
+tikz-figs/
+  gnn-message-passing.tikz
+  architecture-overview.tikz
+  graph-isomorphism-example.tikz
+```
+
+The `.tikz` file contains **only** the `tikzpicture` environment — no preamble, no `\begin{figure}`. Include in the document with:
+
+```latex
+\begin{figure}[t]
+  \centering
+  \input{tikz-figs/figure-name.tikz}
+  \caption{Caption.}
+  \label{fig:figure-name}
+\end{figure}
+```
+
+Prefer `gnn-message-passing.tikz` over `figure1.tikz` — names should be permanent and descriptive, not positional.

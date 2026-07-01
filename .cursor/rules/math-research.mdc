@@ -1,0 +1,56 @@
+---
+description: Core rules for ML/math research paper writing in this repo. Apply when editing any LaTeX, bibliography, or style files.
+globs:
+  - "*.tex"
+  - "*.sty"
+  - "*.bib"
+alwaysApply: true
+---
+
+# Math Research Project Rules
+
+## Macro Library (`style.sty`)
+
+**Never redefine existing macros.** Use these commands — don't recreate them:
+
+- Bold vectors: `\abf`–`\zbf` (lowercase), `\Abf`–`\Zbf` (uppercase)
+- Blackboard bold: `\AAA` ⚠️ (not `\AA` — reserved by LaTeX), `\BB`, `\CC`, ..., `\SSS` ⚠️ (not `\SS` — reserved), `\TT`, ..., `\ZZ`
+- Calligraphic: `\Ac`, `\Bc`, ..., `\Zc`; aliases `\ecal` (`\mcal{E}`), `\hcal`, `\vcal`, `\zcal`
+- Operators: `\argmax`, `\argmin`, `\diag`, `\tr`, `\inner{a}{b}`, `\norm{x}`, `\abs{x}`, `\transpose{M}`, `\prob[X]{E}`, `\expect[X]{f}`, `\ind[S]`, `\identity{n}`
+- GNN: `\agg` (aggregation □), `\concat` (concatenation ‖)
+- Definitions: `\defeq` (`:=`), `\eqdef` (`=:`)
+- Graph theory: `\aut`, `\diam`, `\fix`, `\stab`, `\dom`, `\Span`, `\im`
+- Misc: `\Oh` (big-O), `\floor{x}`, `\ceil{x}`, `\cupdot` (disjoint union), `\multiset{x}`
+- Theorem environments: `thm`, `prop`, `rmk` (unnumbered), `pf` (with QED), `proofSketch`
+- Algorithm: `\CONTINUE`, `\RETURN`, `\BREAK`, `\TRUE`, `\FALSE`, `\alglabel{n}`, `\algref{n}`
+
+## Citation Rules
+
+**Never add `\cite{key}` for a source you cannot independently verify.** Before citing:
+1. Confirm the exact title, at least the first author, year, and venue
+2. Confirm the specific claim being cited actually appears in the paper
+3. Add the key to `sources.md` → **Pending Verification** immediately
+4. Run `/literature-reviewer` to move it to **Verified**
+
+When uncertain: `% TODO: verify cite — <reason>` adjacent to the `\cite{}`.
+
+## Math Verification
+
+Flag any step you are not certain about:
+```latex
+% TODO: verify — <what specifically is uncertain>
+```
+
+Before finalizing any derivation, check:
+- Summation indices in valid range; operations well-defined when sets are empty
+- Matrix dimensions compatible at each multiplication
+- No step assumes the conclusion (circular reasoning)
+- Edge cases: empty graph ($|V|=0$), single node, disconnected, degenerate eigenvalues
+- Interchange of limits/expectations/sums justified (name the applicable theorem)
+
+## Document Hygiene
+
+- **Scratch content**: Use `% DRAFT: <content>` prefix. Must be deleted before a clean draft.
+- **Dead ends**: When an approach fails, delete it — do not comment it out and leave it.
+- **Editing**: When refining prose, cut. Target ≥20% word reduction. Equal-length rephrasing is not editing.
+- **Banned phrases** (always cut): "It is worth noting that", "In this section we will", "As mentioned previously" (when the prior mention is gone), "It is easy to see that", "Clearly,"

@@ -1,0 +1,78 @@
+---
+description: Adding, modifying, or reviewing citations and bibliography entries — apply when editing .bib files or inserting \cite{} commands
+globs:
+  - "*.bib"
+  - "*.tex"
+alwaysApply: false
+---
+
+# Citation Rules
+
+## Prime Directive
+
+**Never fabricate citation metadata.** If you cannot verify that a paper with those exact authors, title, year, and venue exists — do not add the citation. This includes:
+- Inventing plausible-sounding arXiv IDs
+- Guessing author names for a real paper
+- Using a conference year that differs from the actual publication year
+- Citing a survey as the source of a result the survey itself doesn't prove
+
+## Before Adding Any `\cite{key}`
+
+1. Verify the paper exists: exact title, at least first author, year, venue
+2. Verify the specific claim at the cite site actually appears in the paper
+3. Add the key to `sources.md` → **Pending Verification** immediately
+4. Run `/literature-reviewer` to confirm and move to **Verified**
+
+If you cannot verify: write `% TODO: verify cite — <what you couldn't confirm>` at the cite site and leave it in Pending.
+
+## Cite Key Format
+
+`lastNameYYYYkeyword` — lowercase, no spaces, no hyphens:
+
+```
+kipf2017gcn          # Kipf & Welling 2017, GCN
+vaswani2017attention # Vaswani et al. 2017, Transformer
+weisfeiler1968lem    # Weisfeiler & Lehman 1968, WL test
+xu2019powerful       # Xu et al. 2019, GIN
+```
+
+For same author + year + keyword: append `a`, `b`: `chen2020gnna`, `chen2020gnnb`
+
+## Required BibTeX Fields
+
+**Conference paper:**
+```bibtex
+@inproceedings{key,
+  author    = {Last, First and Last, First},
+  title     = {Exact Title As Published},
+  booktitle = {Advances in Neural Information Processing Systems},
+  year      = {2020},
+  pages     = {1234--1245},
+}
+```
+
+**Journal paper:**
+```bibtex
+@article{key,
+  author  = {Last, First and Last, First},
+  title   = {Exact Title},
+  journal = {Journal of Machine Learning Research},
+  volume  = {21},
+  year    = {2020},
+  pages   = {1--50},
+}
+```
+
+**Preprint (use only when no published version exists):**
+```bibtex
+@article{key,
+  author  = {Last, First},
+  title   = {Exact Title},
+  journal = {arXiv preprint arXiv:XXXX.XXXXX},
+  year    = {2020},
+}
+```
+
+## `sources.md`
+
+Every `\cite{key}` in the document must have a row in `sources.md`. Entries in **Pending** or **Flagged** block submission-ready status.

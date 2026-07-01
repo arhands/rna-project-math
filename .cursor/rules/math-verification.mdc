@@ -1,0 +1,113 @@
+---
+description: Writing mathematical proofs, theorems, lemmas, or derivations — apply when inside or about to write a proof environment, formal derivation, or mathematical argument
+globs:
+  - "*.tex"
+alwaysApply: false
+---
+
+# Mathematical Writing and Verification Rules
+
+## Theorem/Lemma Structure
+
+State all assumptions **in the theorem statement**, not buried in the proof:
+
+```latex
+\begin{thm}[Descriptive Name]
+Let $G = (\vcal, \ecal)$ be a connected graph with $|\vcal| \geq 2$.
+Assume \textbf{[assumption 1]} and \textbf{[assumption 2]}.
+Then \textbf{[conclusion]}.
+\end{thm}
+
+\begin{pf}
+  % proof here
+\end{pf}
+```
+
+## Proof Step Requirements
+
+Each step must be justified by exactly one of:
+- A previous step in this proof (reference it)
+- A cited lemma/theorem: `by \cref{lem:foo}` or `by Theorem 3 of \cite{key}`
+- A named standard result: "by the Cauchy-Schwarz inequality", "by linearity of expectation"
+
+Do not write "clearly", "obviously", or "it is easy to see" without a justification. If it is genuinely clear, the justification is one line — write it.
+
+## Verification Checklist
+
+Before writing the final proof, explicitly check each item:
+
+**Index safety**
+- Every $\sum_{i \in S}$ — is $S$ always non-empty? What is the value when $S = \emptyset$?
+- Every sequence subscript — is it in bounds?
+
+**Dimension compatibility**
+- Every matrix product $\Abf\Bbf$: columns of $\Abf$ = rows of $\Bbf$?
+- Every element-wise operation: shapes equal?
+
+**Logical soundness**
+- Does any step assume the conclusion? (circular reasoning)
+- Is every "if and only if" argued in both directions?
+
+**Edge cases** (required for graph-theoretic results):
+- Empty graph: $|\vcal| = 0$
+- Single node: $|\vcal| = 1$
+- Disconnected graph
+- All features identical / zero matrix / rank-deficient case
+- Degenerate or repeated eigenvalues
+
+**Interchange justifications** (must name the applicable theorem):
+- $\sum_i \expect{f_i} = \expect{\sum_i f_i}$: finite sum, or dominated convergence + integrability
+- $\nabla_\theta \expect{f} = \expect{\nabla_\theta f}$: bounded gradient or dominated convergence
+- Limit of sequence of expectations: monotone convergence or dominated convergence
+
+## Flagging Uncertainty
+
+When a step isn't fully rigorous but you want to continue drafting:
+```latex
+% TODO: verify — <what specifically is uncertain about this step>
+```
+
+Do not submit a paper with any `% TODO: verify` remaining. Resolve them first.
+
+## Proof Structure: Main Body vs. Appendix
+
+Every theorem in the main paper gets two proof versions:
+
+**Main body** — short intuitive sketch using `proofSketch`:
+```latex
+\begin{proofSketch}
+  The key idea is [one sentence capturing the core insight — WHY it is true, not just HOW].
+  [2–5 lines of high-level argument naming the main steps.]
+  Full proof in \cref{app:proof-thm-name}.
+\end{proofSketch}
+```
+
+**Appendix** (`appendices/proofs.tex`) — full rigorous proof:
+```latex
+\subsection{Proof of \cref{thm:name}}
+\label{app:proof-thm-name}
+\begin{pf}
+  % All steps with explicit justifications; passes full checklist
+\end{pf}
+```
+
+The sketch must convey genuine insight — not just "see appendix." A reader who trusts the result should follow the core argument from the sketch alone. The appendix proof must pass every item in the verification checklist above.
+
+## Environments
+
+```latex
+\begin{pf}               % Full proof — ends with QED box (from style.sty)
+\begin{pf}[of Lemma 3]   % Named proof
+\begin{proofSketch}       % Proof sketch — no QED box (from main.tex)
+```
+
+For long proofs, use labeled steps to aid reading:
+```latex
+\begin{pf}
+  \textbf{Step 1} (Bounding the first term).
+  ...
+
+  \textbf{Step 2} (Combining the bounds).
+  ...
+\end{pf}
+```

@@ -1,0 +1,235 @@
+\usepackage{xcolor}
+%\usepackage{biblatex}
+%\bibliography{bibliography}
+%\bibliographystyle{unsrtnat}
+%\newcommand{\todo}[1]{\hfill\\{\PackageWarning{style}{TODO: {#1}}\centering\color{red}\textbf{TODO: {#1}}}\\}
+%\usepackage[parfill]{parskip}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% figures
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{tikz}
+\usepackage{tikz-3dplot}
+\usepackage{tikz-cd}
+\usepackage{amsthm}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% algorithm line numbers
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\iffalse
+\usepackage{pgfkeys}
+
+\newcommand{\setvalue}[1]{\pgfkeys{/variables/#1} Calling `setvalue({#1})'}
+\newcommand{\getvalue}[1]{\pgfkeysvalueof{/variables/#1} Calling `getvalue({#1})'}
+\newcommand{\declare}[1]{%
+ \pgfkeys{
+  /variables/#1.is family,
+  /variables/#1.unknown/.style = {\pgfkeyscurrentpath/\pgfkeyscurrentname/.initial = ##1}
+ }%
+}
+\declare{}
+%\declare{alg/}
+
+\newcommand{\alglabel}[1]{
+    \setvalue{#1 = \arabic{ALC@line}}
+}
+\newcommand{\algref}[1]{
+    line \getvalue{#1}
+}
+\fi
+\newcommand{\alglabel}[1]{
+    \newcounter{#1}
+    \setcounter{#1}{\value{ALC@line}}
+}
+\newcommand{\algref}[1]{
+    line \arabic{#1}
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% MATH
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{amsfonts}
+\usepackage{mathtools}
+\usepackage{amssymb}
+
+\newcommand{\mcal}[1]{\mathcal{#1}}
+\newcommand{\mbb}[1]{\mathbb{#1}}
+
+\usepackage{tikz}
+\usepackage{tikz-3dplot}
+\usetikzlibrary{arrows.meta, calc}
+%\newcommand{\mbf}[1]{\mathbf{#1}}
+
+%\newcommand{\risi}[1]{\todo{\color{red}{\textbf{Risi:}#1}}}
+
+%\newtheorem{ex}{Example}
+%\newtheorem{dfn}{Definition}
+%\newtheorem{notation}{Notation}
+%\newtheorem{thm}{Theorem}
+%\newtheorem{prop}{Proposition}
+
+\newenvironment{pf}[1][]{\textbf{\ifx\empty#1\empty Proof\else#1\fi:}}{\hfill$\square$\\}
+
+\providecommand*{\cupdot}{%
+  \mathbin{%
+    \mathpalette\@cupdot{}%
+  }%
+}
+\newcommand*{\@cupdot}[2]{%
+  \ooalign{%
+    $\m@th#1\cup$\cr
+    \hidewidth$\m@th#1\cdot$\hidewidth
+  }%
+}
+\makeatother
+\newcommand{\transpose}[1]{{#1}^\text{T}}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\diag}{diag}
+\newcommand{\defeq}{\vcentcolon=}
+\newcommand{\eqdef}{=\vcentcolon}
+\newcommand{\ind}[1]{\mathbf{1}_{#1}}
+\newcommand{\fix}{\text{fix}}
+\newcommand{\stab}{\text{stab}}
+\newcommand{\tr}{\text{Tr}}
+\newcommand{\aut}{\text{aut}}
+\newcommand{\diam}{\text{diam}}
+\newcommand{\dom}{\text{dom}}
+\newcommand{\Span}{\text{span}}
+\newcommand{\inner}[2]{\langle {#1}, {#2}\rangle}
+\newcommand{\agg}{\mathop{\square}}
+\newcommand{\concat}{\mathbin\Vert}
+\newcommand{\im}{\text{im }}
+\newcommand{\norm}[1]{\left|\left|{#1}\right|\right|}
+\newcommand{\abs}[1]{\left|{#1}\right|}
+\newcommand{\prob}[2][]{\text{Pr}_{#1}\left[{#2}\right]}
+\newcommand{\expect}[2][]{\mathbb{E}_{#1}\left[{#2}\right]}
+
+\newcommand{\identity}[1]{\text{Id}_{#1}}
+
+\newcommand{\Oh}{\mathcal{O}}
+%\newcommand{\ker}[1]{\text{ker}}
+
+\newcommand{\abf}{\mathbf{a}}
+\newcommand{\Abf}{\mathbf{A}}
+\newcommand{\bbf}{\mathbf{b}}
+\newcommand{\Bbf}{\mathbf{B}}
+\newcommand{\cbf}{\mathbf{c}}
+\newcommand{\Cbf}{\mathbf{C}}
+\newcommand{\dbf}{\mathbf{d}}
+\newcommand{\Dbf}{\mathbf{D}}
+\newcommand{\ebf}{\mathbf{e}}
+\newcommand{\Ebf}{\mathbf{E}}
+\newcommand{\fbf}{\mathbf{f}}
+\newcommand{\Fbf}{\mathbf{F}}
+\newcommand{\gbf}{\mathbf{g}}
+\newcommand{\Gbf}{\mathbf{G}}
+\newcommand{\hbf}{\mathbf{h}}
+\newcommand{\Hbf}{\mathbf{H}}
+\newcommand{\ibf}{\mathbf{i}}
+\newcommand{\Ibf}{\mathbf{I}}
+\newcommand{\jbf}{\mathbf{j}}
+\newcommand{\Jbf}{\mathbf{J}}
+\newcommand{\kbf}{\mathbf{k}}
+\newcommand{\Kbf}{\mathbf{K}}
+\newcommand{\lbf}{\mathbf{l}}
+\newcommand{\Lbf}{\mathbf{L}}
+\newcommand{\mbf}{\mathbf{m}}
+\newcommand{\Mbf}{\mathbf{M}}
+\newcommand{\nbf}{\mathbf{n}}
+\newcommand{\Nbf}{\mathbf{N}}
+\newcommand{\obf}{\mathbf{o}}
+\newcommand{\Obf}{\mathbf{O}}
+\newcommand{\pbf}{\mathbf{p}}
+\newcommand{\Pbf}{\mathbf{P}}
+\newcommand{\qbf}{\mathbf{q}}
+\newcommand{\Qbf}{\mathbf{Q}}
+\newcommand{\rbf}{\mathbf{r}}
+\newcommand{\Rbf}{\mathbf{R}}
+\newcommand{\sbf}{\mathbf{s}}
+\newcommand{\Sbf}{\mathbf{S}}
+\newcommand{\tbf}{\mathbf{t}}
+\newcommand{\Tbf}{\mathbf{T}}
+\newcommand{\ubf}{\mathbf{u}}
+\newcommand{\Ubf}{\mathbf{U}}
+\newcommand{\vbf}{\mathbf{v}}
+\newcommand{\Vbf}{\mathbf{V}}
+\newcommand{\wbf}{\mathbf{w}}
+\newcommand{\Wbf}{\mathbf{W}}
+\newcommand{\xbf}{\mathbf{x}}
+\newcommand{\Xbf}{\mathbf{X}}
+\newcommand{\ybf}{\mathbf{y}}
+\newcommand{\Ybf}{\mathbf{Y}}
+\newcommand{\zbf}{\mathbf{z}}
+\newcommand{\Zbf}{\mathbf{Z}}
+
+\newcommand{\AAA}{\mbb A}
+\newcommand{\BB}{\mbb B}
+\newcommand{\CC}{\mbb C}
+\newcommand{\DD}{\mbb D}
+\newcommand{\EE}{\mbb E}
+\newcommand{\FF}{\mbb F}
+\newcommand{\GG}{\mbb G}
+\newcommand{\HH}{\mbb H}
+\newcommand{\II}{\mbb I}
+\newcommand{\JJ}{\mbb J}
+\newcommand{\KK}{\mbb K}
+\newcommand{\LL}{\mbb L}
+\newcommand{\MM}{\mbb M}
+\newcommand{\NN}{\mbb N}
+\newcommand{\OO}{\mbb O}
+\newcommand{\PP}{\mbb P}
+\newcommand{\QQ}{\mbb Q}
+\newcommand{\RR}{\mbb R}
+\newcommand{\SSS}{\mbb S}
+\newcommand{\TT}{\mbb T}
+\newcommand{\UU}{\mbb U}
+\newcommand{\VV}{\mbb V}
+\newcommand{\WW}{\mbb W}
+\newcommand{\XX}{\mbb X}
+\newcommand{\YY}{\mbb Y}
+\newcommand{\ZZ}{\mbb Z}
+\newcommand{\sym}{\mbb S}
+
+\newcommand{\ecal}{\mcal E}
+\newcommand{\hcal}{\mcal H}
+\newcommand{\vcal}{\mcal V}
+\newcommand{\zcal}{\mcal Z}
+
+\newcommand{\Ac}{\mcal A}
+\newcommand{\Bc}{\mcal B}
+\newcommand{\Cc}{\mcal C}
+\newcommand{\Dc}{\mcal D}
+\newcommand{\Ec}{\mcal E}
+\newcommand{\Fc}{\mcal F}
+\newcommand{\Gc}{\mcal G}
+\newcommand{\Hc}{\mcal H}
+\newcommand{\Ic}{\mcal I}
+\newcommand{\Jc}{\mcal J}
+\newcommand{\Kc}{\mcal K}
+\newcommand{\Lc}{\mcal L}
+\newcommand{\Mc}{\mcal M}
+\newcommand{\Nc}{\mcal N}
+\newcommand{\Oc}{\mcal O}
+\newcommand{\Pc}{\mcal P}
+\newcommand{\Qc}{\mcal Q}
+\newcommand{\Rc}{\mcal R}
+\newcommand{\Sc}{\mcal S}
+\newcommand{\Tc}{\mcal T}
+\newcommand{\Uc}{\mcal U}
+\newcommand{\Vc}{\mcal V}
+\newcommand{\Wc}{\mcal W}
+\newcommand{\Xc}{\mcal X}
+\newcommand{\Yc}{\mcal Y}
+\newcommand{\Zc}{\mcal Z}
+
+
+
+\newcommand{\floor}[1]{\left\lfloor{#1}\right\rfloor}
+\newcommand{\ceil}[1]{\left\lceil{#1}\right\rceil}
+\newcommand{\cost}{\text{Cost}}
+\newcommand{\multiset}[1]{\left\{\!\!\left\{{#1}\right\}\!\!\right\}}
+
+% Algorithm macros
+\newcommand{\CONTINUE}{\STATE continue}
+\newcommand{\RETURN}{\STATE return}
+\newcommand{\BREAK}{\STATE break}
+\newcommand{\FALSE}{False}
+\newcommand{\TRUE}{True}
