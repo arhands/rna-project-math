@@ -1,16 +1,8 @@
 \documentclass{article}
 \usepackage{style}
-\usepackage{graphicx} % Required for inserting images
-\newtheorem{thm}{Theorem}
-\newtheorem{prop}{Proposition}
-\theoremstyle{remark}
-\newtheorem*{rmk}{Remark}
-\usepackage{hyperref}
-\newenvironment{proofSketch}{\noindent \textbf{Proof (sketch):}}
-{\hfill\\}
+\setlength{\parindent}{0pt}
 
 \title{Hill Function Learning}
-\setlength{\parindent}{0pt}
 
 \begin{document}
 
@@ -19,83 +11,55 @@
 Let $\Omega_S$ be a space of model inputs (RNA sequences, primary and secondary structures, etc.).
 \newcommand{\distr}{\rho}
 
-There exists $f_{H}:\Omega_S\to\RR^4$ with $f_{H}(s)=(Y_{\min}(s),Y_{\max}(s),K_{1/2}(s),n(s))$ parameterizing the Hill curve
+There exists $f_{H}:\Omega_S\to\RR^4$ with $f_{H}(s)=(Y_{\min}(s),Y_{\max}(s),K_{1/2}(s),n(s))$ parameterizing, for $x>0$,
 \begin{align*}
     H(x;Y_{\min},Y_{\max},K_{1/2},n)
-                     & = Y_{\min} + \frac{Y_{\max} - Y_{\min}}{1 + \left(\frac{K_{1/2}}{x}\right)^n} \\
-                     & = Y_{\min} + (Y_{\max} - Y_{\min})\sigma\left(n\log\frac{x}{K_{1/2}}\right)   \\
-                     & = H(x;f_{H}(s)) = H(x;s),
-    \intertext{and the fold value}
-    \mathrm{fold}(s) & = \frac{H(1;s)}{H(0;s)}.
+     & = Y_{\min} + \frac{Y_{\max} - Y_{\min}}{1 + \left(\frac{K_{1/2}}{x}\right)^n}
+     = H(x;f_{H}(s)) = H(x;s),
 \end{align*}
+with basal level $H(0;s)\defeq Y_{\min}(s)$ and fold value $\mathrm{fold}(s)=H(1;s)/H(0;s)$.
 The predictor is $\mu_{\theta}:\Omega_S\to\RR^4$ with $\mu_{\theta}(s)\approx f_{H}(s)$.
 
 \section{Data}
-Each input $S$ comes with a finite set of noisy observations
+Each input $S$ comes with noisy observations
 \[
-    Z = \{(x_j, y_j)\}_{j=1}^{m(S)} \subset \RR \times \RR,
+    Z = \{(x_j, y_j)\}_{j=1}^{m(S)} \subset \RR_{>0} \times \RR,
     \qquad (S,Z)\sim\distr,
 \]
-where $(0,\cdot)$ and $(1,\cdot)$ are always present and interior concentrations may appear.
-Each pair satisfies $y = H(x;f_H(S)) + \varepsilon$ with $\expect{\varepsilon\mid S,x}=0$ and independent $\varepsilon$ across points.
+where $(0,y_0)$ and $(1,y_1)$ are always present and interior concentrations may appear.
+Each pair satisfies $y = H(x;f_H(S)) + \varepsilon$ with $\expect{}{\varepsilon}=0$ for each fixed $(S,x)$ and independent $\varepsilon$ across points.
 
-\section{Baseline-normalized loss}
-Fold is a relative quantity: normalize observations by the true basal $H(0;f_H(S))$ and predictions by $H(0;\mu_{\theta}(S))$.
-At training time the basal observation $y_0$ from $(0,y_0)\in Z$ stands in for $H(0;f_H(S))$.
-Define
+\section{Relative-curve loss}
+Normalize by the mandatory basal observation $y_0$ from $(0,y_0)\in Z$:
 \begin{align*}
     \widetilde{H}(x;\mu_{\theta}(S))
      & \defeq \frac{H(x;\mu_{\theta}(S))}{H(0;\mu_{\theta}(S))},
     \qquad
-    \widetilde{H}(0;\mu_{\theta}(S)) = 1,
-    \qquad
-    \widetilde{H}(1;\mu_{\theta}(S)) = \mathrm{fold}_\mu(S).
+    \mathrm{fold}_\mu(S) \defeq \widetilde{H}(1;\mu_{\theta}(S)).
 \end{align*}
 The per-point kernel is
 \begin{align*}
     \ell(y,x,y_0;\mu_{\theta}(S))
-     & \defeq
-    \left(
-    \frac{y}{y_0}
-    - \widetilde{H}(x;\mu_{\theta}(S))
-    \right)^2.
+     & \defeq \left(\frac{y}{y_0} - \widetilde{H}(x;\mu_{\theta}(S))\right)^2,
 \end{align*}
-Each input contributes the mean over its observation set,
-\begin{align*}
-    \ell_{\theta}(S,Z)
-     & \defeq \frac{1}{|Z|}\sum_{(x,y)\in Z} \ell(y,x,y_0;\mu_{\theta}(S)),
-\end{align*}
-where $y_0$ is the $x=0$ entry of $Z$, so $|Z|$ does not weight sequences with more concentrations more heavily.
-The population loss is $\mathcal{L}(\theta)\defeq\expect[(S,Z)]{\ell_{\theta}(S,Z)}$, which under independence of $\varepsilon$ from the model error decomposes as
-\begin{align*}
-    \mathcal{L}(\theta)
-     & = \expect[(S,Z)]{
-        \frac{1}{|Z|}\sum_{(x,y)\in Z}
-        \left(
-        \frac{H(x;f_H(S))}{H(0;f_H(S))}
-        - \widetilde{H}(x;\mu_{\theta}(S))
-        \right)^2
-    }
-    + \text{(noise)},
-\end{align*}
-where the model-error term compares relative curves directly and does not involve $H(0;\mu_{\theta})$ in the data-side denominator.
-The $x=0$ term vanishes identically, since $y_0/y_0=1=\widetilde{H}(0;\mu_{\theta})$.
+with per-set mean $\ell_{\theta}(S,Z)\defeq |Z|^{-1}\sum_{(x,y)\in Z}\ell(y,x,y_0;\mu_{\theta}(S))$ and population loss $\mathcal{L}(\theta)\defeq\expect[(S,Z)]{\ell_{\theta}(S,Z)}$.
+Averaging by $|Z|$ gives each input equal weight; interior $(x,y)$ use the same kernel with weight $1/|Z|$.
+Under mean-zero noise, $\mathcal{L}(\theta)$ equals mean squared error on true relative curves $H(x;f_H(S))/H(0;f_H(S))$ plus a $\theta$-independent noise term; the data side uses $H(0;f_H(S))$, not $H(0;\mu_{\theta}(S))$.
+The $x=0$ term vanishes since $y_0/y_0=\widetilde{H}(0;\mu_{\theta})=1$.
 When $Z=\{(0,y_0),(1,y_1)\}$,
 \begin{align*}
-    \ell_{\theta}(S,Z)
-     & = \tfrac12\left(\frac{y_1}{y_0} - \mathrm{fold}_\mu(S)\right)^2.
+    \ell_{\theta}(S,Z) = \tfrac12\left(\frac{y_1}{y_0} - \mathrm{fold}_\mu(S)\right)^2.
 \end{align*}
-Interior points enter through the same $\ell$ with weight $1/|Z|$ and constrain $K_{1/2}$ and $n$ via $\widetilde{H}$.
+Interior points constrain $K_{1/2}$ and $n$ through $\widetilde{H}$.
 
 \paragraph{Optional basal anchor.}
-The main loss is blind to joint scaling of $(Y_{\min},Y_{\max})$, as $\mathrm{fold}(s)$ itself is.
-If absolute basal level $Y_{\min}(S)=H(0;f_H(S))$ must be identified, reuse the $x=0$ observation with
+The main loss is invariant to joint scaling of $(Y_{\min},Y_{\max})$, as is $\mathrm{fold}(s)$.
+If absolute basal $Y_{\min}(S)=H(0;f_H(S))$ must be identified, replace the vacuous $x=0$ relative term with
 \begin{align*}
     \ell_{\mathrm{base}}(\mu_{\theta}(S),y_0)
      & \defeq \left(\frac{y_0}{H(0;\mu_{\theta}(S))} - 1\right)^2,
 \end{align*}
-which vanishes when $H(0;\mu_{\theta}(S))=y_0$.
-Define the hybrid per-set loss by applying $\ell_{\mathrm{base}}$ at $x=0$ and $\ell$ elsewhere:
+and define
 \begin{align*}
     \ell^{\mathrm{hyb}}_{\theta}(S,Z)
      & \defeq \frac{1}{|Z|}\left[
@@ -103,12 +67,11 @@ Define the hybrid per-set loss by applying $\ell_{\mathrm{base}}$ at $x=0$ and $
         + \sum_{(x,y)\in Z,\, x\neq 0} \ell(y,x,y_0;\mu_{\theta}(S))
         \right].
 \end{align*}
-For $Z=\{(0,y_0),(1,y_1)\}$, this splits evenly between basal and fold error.
-The basal term uses $H(0;\mu_{\theta})$ only at $x=0$, with fixed $y_0$, so inflating $H(0;\mu_{\theta})\to\infty$ still drives $\ell_{\mathrm{base}}\to 1$, not~$0$.
+For $Z=\{(0,y_0),(1,y_1)\}$, basal and fold error each receive weight $\tfrac12$; $\ell_{\mathrm{base}}\not\to 0$ when $H(0;\mu_{\theta})\to\infty$ with fixed $y_0$.
 
 \section{Constraints}
-Enforce $Y_{\min}(S)>0$ and $H(x;\mu_{\theta}(S))>0$ (e.g.\ softplus outputs with a floor).
-Require a minimum dynamic range $Y_{\max}\ge Y_{\min}+\delta$ for $\delta>0$ so the curve cannot collapse to flat.
-Since $\widetilde{H}$ is scale-invariant, inflating $Y_{\min}$ and $Y_{\max}$ together does not change the model side of $\ell$; the data side is anchored by $y_0$ and cannot be deflated by growing $H(0;\mu_{\theta})$.
+Enforce $Y_{\min},K_{1/2}>0$ and $H(x;\mu_{\theta}(S))>0$ (e.g.\ softplus outputs with a floor).
+Require $Y_{\max}\ge Y_{\min}+\delta$ for $\delta>0$.
+Joint inflation of $(Y_{\min},Y_{\max})$ leaves $\widetilde{H}$ unchanged; $y_0$ fixes the data-side scale in both $\mathcal{L}$ and $\ell^{\mathrm{hyb}}_{\theta}$.
 
 \end{document}
