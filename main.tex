@@ -22,9 +22,9 @@ Let $\Omega_S$ be a space of model inputs (RNA sequences, primary and secondary 
 There exists $f_{H}:\Omega_S\to\RR^4$ with $f_{H}(s)=(Y_{\min}(s),Y_{\max}(s),K_{1/2}(s),n(s))$ parameterizing the Hill curve
 \begin{align*}
     H(x;Y_{\min},Y_{\max},K_{1/2},n)
-     & = Y_{\min} + \frac{Y_{\max} - Y_{\min}}{1 + \left(\frac{K_{1/2}}{x}\right)^n} \\
-     & = Y_{\min} + (Y_{\max} - Y_{\min})\sigma\left(n\log\frac{x}{K_{1/2}}\right)   \\
-     & = H(x;f_{H}(s)) = H(x;s),
+                     & = Y_{\min} + \frac{Y_{\max} - Y_{\min}}{1 + \left(\frac{K_{1/2}}{x}\right)^n} \\
+                     & = Y_{\min} + (Y_{\max} - Y_{\min})\sigma\left(n\log\frac{x}{K_{1/2}}\right)   \\
+                     & = H(x;f_{H}(s)) = H(x;s),
     \intertext{and the fold value}
     \mathrm{fold}(s) & = \frac{H(1;s)}{H(0;s)}.
 \end{align*}
@@ -40,7 +40,9 @@ where $(0,\cdot)$ and $(1,\cdot)$ are always present and interior concentrations
 Each pair satisfies $y = H(x;f_H(S)) + \varepsilon$ with $\expect{\varepsilon\mid S,x}=0$ and independent $\varepsilon$ across points.
 
 \section{Baseline-normalized loss}
-Fold is a relative quantity, so normalize by the predicted basal level $H(0;\mu_{\theta}(S))$:
+Fold is a relative quantity: normalize observations by the true basal $H(0;f_H(S))$ and predictions by $H(0;\mu_{\theta}(S))$.
+At training time the basal observation $y_0$ from $(0,y_0)\in Z$ stands in for $H(0;f_H(S))$.
+Define
 \begin{align*}
     \widetilde{H}(x;\mu_{\theta}(S))
      & \defeq \frac{H(x;\mu_{\theta}(S))}{H(0;\mu_{\theta}(S))},
@@ -51,44 +53,43 @@ Fold is a relative quantity, so normalize by the predicted basal level $H(0;\mu_
 \end{align*}
 The per-point kernel is
 \begin{align*}
-    \ell(y,x;\mu_{\theta}(S))
+    \ell(y,x,y_0;\mu_{\theta}(S))
      & \defeq
     \left(
-        \frac{y}{H(0;\mu_{\theta}(S))}
-        - \widetilde{H}(x;\mu_{\theta}(S))
+    \frac{y}{y_0}
+    - \widetilde{H}(x;\mu_{\theta}(S))
     \right)^2.
 \end{align*}
 Each input contributes the mean over its observation set,
 \begin{align*}
     \ell_{\theta}(S,Z)
-     & \defeq \frac{1}{|Z|}\sum_{(x,y)\in Z} \ell(y,x;\mu_{\theta}(S)),
+     & \defeq \frac{1}{|Z|}\sum_{(x,y)\in Z} \ell(y,x,y_0;\mu_{\theta}(S)),
 \end{align*}
-so $|Z|$ does not weight sequences with more concentrations more heavily.
+where $y_0$ is the $x=0$ entry of $Z$, so $|Z|$ does not weight sequences with more concentrations more heavily.
 The population loss is $\mathcal{L}(\theta)\defeq\expect[(S,Z)]{\ell_{\theta}(S,Z)}$, which under independence of $\varepsilon$ from the model error decomposes as
 \begin{align*}
     \mathcal{L}(\theta)
      & = \expect[(S,Z)]{
         \frac{1}{|Z|}\sum_{(x,y)\in Z}
         \left(
-            \frac{H(x;f_H(S))}{H(0;\mu_{\theta}(S))}
-            - \widetilde{H}(x;\mu_{\theta}(S))
+        \frac{H(x;f_H(S))}{H(0;f_H(S))}
+        - \widetilde{H}(x;\mu_{\theta}(S))
         \right)^2
     }
-    + \expect[(S,Z)]{
-        \frac{1}{|Z|}\sum_{(x,y)\in Z} \frac{\varepsilon^2}{H(0;\mu_{\theta}(S))^2}
-    }.
+    + \text{(noise)},
 \end{align*}
+where the model-error term compares relative curves directly and does not involve $H(0;\mu_{\theta})$ in the data-side denominator.
+The $x=0$ term vanishes identically, since $y_0/y_0=1=\widetilde{H}(0;\mu_{\theta})$.
 When $Z=\{(0,y_0),(1,y_1)\}$,
 \begin{align*}
     \ell_{\theta}(S,Z)
-     & = \tfrac12\left(\frac{y_0}{H(0;\mu_{\theta}(S))} - 1\right)^2
-    + \tfrac12\left(\frac{y_1}{H(0;\mu_{\theta}(S))} - \mathrm{fold}_\mu(S)\right)^2.
+     & = \tfrac12\left(\frac{y_1}{y_0} - \mathrm{fold}_\mu(S)\right)^2.
 \end{align*}
 Interior points enter through the same $\ell$ with weight $1/|Z|$ and constrain $K_{1/2}$ and $n$ via $\widetilde{H}$.
 
 \section{Constraints}
 Enforce $Y_{\min}(S)>0$ and $H(x;\mu_{\theta}(S))>0$ (e.g.\ softplus outputs with a floor).
 Require a minimum dynamic range $Y_{\max}\ge Y_{\min}+\delta$ for $\delta>0$ so the curve cannot collapse to flat.
-Since $Y_{\min}=H(0;\mu_{\theta})$ is learned and appears in every denominator, basal and fold are estimated jointly from the same normalization.
+Since $\widetilde{H}$ is scale-invariant, inflating $Y_{\min}$ and $Y_{\max}$ together does not change the model side of $\ell$; the data side is anchored by $y_0$ and cannot be deflated by growing $H(0;\mu_{\theta})$.
 
 \end{document}
