@@ -35,30 +35,202 @@ Said hill curve is defined by
     \intertext{A related value is the fold value, defined as}
     \text{fold}(s)                   & = \frac{H(1;s)}{H(0;s)}
 \end{align*}
-\iffalse
-    In practice, our data is distributed according to some $(S, Z)\sim \distr:\Omega_S\times\Pc(\RR^2)\to\RR$, where $Z$ is a set of observations on the curve $H(\cdot;S)$, with some added noise. We are given that $(0,\cdot)$ and $(1,\cdot)$ will always be present in $Z$, but sometimes other points also appear in $Z$, which we could potentially take advantage of. To do this, define the learning model $\mu_{\theta}:\Omega_S\to\RR^3$ s.t. $\mu_{\theta}(s)\approx f_{H}(s)$.
-
-    Then, consider the loss function
-    \begin{align*}
-        \mathcal{L}(\theta) & = \expect[(S,Z)]{
-            \sum_{(x,y)\in Z} \left(y - H(x;\mu_{\theta}(s))\right)^2
-        }
-    \end{align*}
-\fi
-In practice, our data is distributed according to some $(S, X,Z)\sim \distr:\Omega_S\times\RR\times\RR\to\RR$, where $Y=H(X;f_H(S))+Z$ is the observed fractional bound at concentration $X$ for input $S$, and $Z$. Note that $Z$ for any fixed $S$ and $X$ has mean $0$.\\
-Then, consider the loss function
+\subsection{Data model}
+In practice, each input $S$ comes with a finite set of noisy curve observations
+\[
+    Z = \{(x_j, y_j)\}_{j=1}^{m(S)} \subset \RR \times \RR,
+\]
+drawn from $(S,Z)\sim\distr$.
+The endpoints $(0,\cdot)$ and $(1,\cdot)$ are always present; additional interior concentrations may or may not appear.
+Write
 \begin{align*}
-    \mathcal{L}(\theta) & = \expect{
-        \left(Y - H(X;\mu_{\theta}(S))\right)^2
-    }                                         \\
-                        & = \expect[(S,X,Z)]{
-        \left(H(X;f_H(S)) + Z - H(X;\mu_{\theta}(S))\right)^2
-    }                                         \\
-    \intertext{Assuming $Z$ is linearly independent of $H(X;f_H(S))- H(X;\mu_{\theta}(S))$, we have}
-                        & = \expect{
-        \left(H(X;f_H(S)) - H(X;\mu_{\theta}(S))\right)^2
-    } + \var{Z}                               \\
+    y = H(x;f_H(S)) + \varepsilon,
+    \qquad \expect{\varepsilon \mid S,x} = 0,
 \end{align*}
+for each observed pair $(x,y)\in Z$, with $\varepsilon$ independent across points and independent of the model error below.
+Define the predictor $\mu_{\theta}:\Omega_S\to\RR^4$ with $\mu_{\theta}(s)\approx f_H(s)$.
+
+\subsection{Pointwise MSE and its limitation}
+The natural set loss (summed over points) is
+\begin{align*}
+    \mathcal{L}_{\mathrm{pw}}(\theta)
+     & \defeq \expect[(S,Z)]{
+        \sum_{(x,y)\in Z} \left(y - H(x;\mu_{\theta}(S))\right)^2
+    }                                                                                          \\
+     & = \expect[(S,Z)]{
+        \sum_{(x,y)\in Z} \left(H(x;f_H(S)) - H(x;\mu_{\theta}(S))\right)^2
+    } + \expect[(S,Z)]{\sum_{(x,y)\in Z} \varepsilon^2},
+\end{align*}
+provided each $\varepsilon$ is independent of the corresponding model error.
+Summing over $Z$ gives sequences with more observed concentrations higher weight in~$\mathcal{L}_{\mathrm{pw}}$.
+We avoid that below by averaging within each~$Z$.
+This fits absolute curve levels.
+It does not prioritize the fold value $\mathrm{fold}(s)=H(1;s)/H(0;s)$: if $H(0;f_H)=1$, $H(1;f_H)=2$ but $H(0;\mu)=2$, $H(1;\mu)=4$, then the fold error is $0$ while $\mathcal{L}_{\mathrm{pw}}$ is still positive at the endpoints.
+By contrast,
+\begin{align*}
+    \mathcal{L}_{\mathrm{fold}}(\theta)
+     & \defeq \expect[S]{
+        \left(
+            \frac{H(1;f_H(S))}{H(0;f_H(S))}
+            - \frac{H(1;\mu_{\theta}(S))}{H(0;\mu_{\theta}(S))}
+        \right)^2
+    }
+\end{align*}
+penalizes only the endpoint ratio.
+When $Z$ contains just the two endpoints, $\mathcal{L}_{\mathrm{pw}}$ treats basal and saturated absolute errors symmetrically; $\mathcal{L}_{\mathrm{fold}}$ ignores basal error entirely.
+
+\subsection{Baseline-normalized loss}
+Fold is a \emph{relative} quantity, so normalize all curve values by the basal level $H(0;\mu_{\theta}(S))$.
+Define the relative Hill curve
+\begin{align*}
+    \widetilde{H}(x;\mu_{\theta}(S))
+     & \defeq \frac{H(x;\mu_{\theta}(S))}{H(0;\mu_{\theta}(S))},
+    \qquad
+    \widetilde{H}(0;\mu_{\theta}(S)) = 1,
+    \qquad
+    \widetilde{H}(1;\mu_{\theta}(S)) = \mathrm{fold}_\mu(S).
+\end{align*}
+Use the per-point kernel
+\begin{align*}
+    \ell(y,x;\mu_{\theta}(S))
+     & \defeq
+    \left(
+        \frac{y}{H(0;\mu_{\theta}(S))}
+        - \widetilde{H}(x;\mu_{\theta}(S))
+    \right)^2,
+\end{align*}
+and the per-input, per-set loss
+\begin{align*}
+    \ell_{\theta}(S,Z)
+     & \defeq \frac{1}{|Z|}\sum_{(x,y)\in Z} \ell(y,x;\mu_{\theta}(S)),
+\end{align*}
+so each $S$ contributes equally regardless of how many concentrations were observed.
+The population loss is
+\begin{align*}
+    \mathcal{L}(\theta)
+     & \defeq \expect[(S,Z)]{\ell_{\theta}(S,Z)}                                                                                          \\
+     & = \expect[(S,Z)]{
+        \frac{1}{|Z|}\sum_{(x,y)\in Z}
+        \left(
+            \frac{H(x;f_H(S))}{H(0;\mu_{\theta}(S))}
+            - \widetilde{H}(x;\mu_{\theta}(S))
+        \right)^2
+    }
+    + \expect[(S,Z)]{
+        \frac{1}{|Z|}\sum_{(x,y)\in Z} \frac{\varepsilon^2}{H(0;\mu_{\theta}(S))^2}
+    }.
+\end{align*}
+Any reduction over $Z$---sum, mean, or another aggregate---could be used in principle; we take the mean so $|Z|$ does not leak into the objective.
+
+\paragraph{Endpoint-only case.}
+If $Z=\{(0,y_0),(1,y_1)\}$, then $|Z|=2$ and
+\begin{align*}
+    \ell_{\theta}(S,Z)
+     & = \tfrac12\left(\frac{y_0}{H(0;\mu_{\theta}(S))} - 1\right)^2
+    + \tfrac12\left(\frac{y_1}{H(0;\mu_{\theta}(S))} - \mathrm{fold}_\mu(S)\right)^2.
+\end{align*}
+At population level (ignoring noise),
+\begin{align*}
+    \expect{\ell_{\theta}(S,Z) \mid S}
+     & = \tfrac12\left(\frac{H(0;f_H(S))}{H(0;\mu_{\theta}(S))} - 1\right)^2
+    + \tfrac12\left(\frac{H(1;f_H(S))}{H(0;\mu_{\theta}(S))} - \mathrm{fold}_\mu(S)\right)^2.
+\end{align*}
+If $H(0;\mu_{\theta}(S)) = H(0;f_H(S))$, the second term is exactly $\tfrac12\,\mathcal{L}_{\mathrm{fold}}(\theta)$ for that~$S$.
+With the always-available endpoints, $\mathcal{L}$ decomposes into basal error plus \emph{fold MSE}, rather than separate absolute errors at $x=0$ and $x=1$.
+
+\paragraph{Additional interior points.}
+When $Z$ also contains interior concentrations, each point---endpoint or interior---enters with weight $1/|Z|$:
+\begin{align*}
+    \ell_{\theta}(S,Z)
+     & = \frac{1}{|Z|}\left[
+        \left(\frac{y_0}{H(0;\mu_{\theta}(S))} - 1\right)^2
+        + \left(\frac{y_1}{H(0;\mu_{\theta}(S))} - \mathrm{fold}_\mu(S)\right)^2
+        \right. \\
+     & \qquad \left.
+        + \sum_{(x,y)\in Z\setminus\{0,1\}}
+        \left(
+            \frac{y}{H(0;\mu_{\theta}(S))}
+            - \widetilde{H}(x;\mu_{\theta}(S))
+        \right)^2
+        \right].
+\end{align*}
+Interior observations are typically sparse, so their total contribution is small relative to the two anchors, but they still constrain $K_{1/2}$ and~$n$ through the relative shape~$\widetilde{H}$.
+
+\paragraph{Single-sample view.}
+If one prefers a single random concentration $X$ per example with $Y=H(X;f_H(S))+\varepsilon$, the same kernel applies pointwise.
+When $X \perp S$ with $X \sim \mathrm{Bernoulli}(1/2)$ on $\{0,1\}$, the population loss averages the two endpoint terms with weight~$\tfrac12$.
+
+\subsection{Noise model}
+Dose--response and binding-curve fitting often exhibits \emph{heteroscedasticity}: variance changes with concentration or mean response.
+Two standard choices are
+\begin{align*}
+    \text{additive:}      & \quad y = H(x;f_H(S)) + \varepsilon,
+    \qquad \var{\varepsilon} \approx \sigma^2, \\
+    \text{multiplicative:} & \quad y = H(x;f_H(S))\,(1+\eta),
+    \qquad \expect{\eta}=0,
+\end{align*}
+where multiplicative noise scales with the signal and keeps $y>0$ when $H>0$.
+Empirical comparisons of Hill-curve fits sometimes favor one form over the other depending on the dataset; in pharmacology, weighted or multiplicative-error formulations are common when variance grows with response level.
+
+The normalized loss $\mathcal{L}$ above is tailored to additive noise with variance re-scaled by $H(0;\mu_{\theta})^2$.
+If noise appears multiplicative, the log-residual variant
+\begin{align*}
+    \mathcal{L}_{\log}(\theta)
+     & \defeq \expect[(S,Z)]{
+        \frac{1}{|Z|}\sum_{(x,y)\in Z}
+        \left(
+            \log y - \log H(0;\mu_{\theta}(S)) - \log \widetilde{H}(x;\mu_{\theta}(S))
+        \right)^2
+    }
+\end{align*}
+targets log-fold at $x=1$ and log-relative shape at interior points.
+% TODO: verify cite — add references once specific Hill/binding noise papers are checked in sources.md
+A practical default is to inspect residual plots on held-out data; if variance grows with fitted $H(x;\mu_{\theta})$, prefer $\mathcal{L}_{\log}$ or inverse-variance weights $w(x)\propto 1/\widehat{\var{\varepsilon\mid x}}$.
+
+\begin{rmk}
+Since $Y_{\min}(S)=H(0;f_H(S))$ is learned rather than fixed, $H(0;\mu_{\theta}(S))$ appears in every denominator and couples gradients across all four Hill parameters.
+That coupling is intentional: fold and basal are estimated jointly from the same normalization.
+Averaging by $|Z|$ keeps each input $S$ on equal footing; with sparse interior points, their combined weight $(|Z|-2)/|Z|$ stays modest, so fold and basal remain the primary drivers unless many interior concentrations are present.
+\end{rmk}
+
+\begin{rmk}[Degeneracies and parameterization]
+Assume $Y_{\min}(S)>0$ and the model enforces $H(x;\mu_{\theta}(S))>0$ for all $x\ge 0$.
+
+\paragraph{Denominator inflation ($Y_{\min}\to\infty$, $Y_{\max}$ fixed).}
+The per-point residual is $(y-H(x;\mu))/H(0;\mu)$, so for \emph{fixed} absolute error $\Delta=y-H(x;\mu)$, inflating $H(0;\mu)=D$ would drive $\Delta^2/D^2\to 0$.
+That pathology requires $|\Delta|$ to stay bounded as $D\to\infty$.
+Observed $y$ is fixed by the data and does not scale with the model; only $H(x;\mu)$ does.
+For the Hill map with $H(0;\mu)=Y_{\min}$ and $Y_{\max}=c$ held constant,
+\[
+    H(x;\mu)=Y_{\min}+\frac{c-Y_{\min}}{1+(K_{1/2}/x)^n}
+    \;\sim\; \Oh(Y_{\min})\quad\text{as }Y_{\min}\to\infty
+\]
+for each fixed $x>0$, while $H(0;\mu)=Y_{\min}$.
+Thus $y-H(x;\mu)=\Oh(Y_{\min})$ at interior points, so $(y-H)/Y_{\min}=\Oh(1)$: the numerator grows with the denominator and the residual need not shrink.
+The $x=0$ anchor is decisive: with $(0,y_0)\in Z$,
+\[
+    \left(\frac{y_0}{Y_{\min}}-1\right)^2 \xrightarrow[Y_{\min}\to\infty]{} 1,
+\]
+so $\ell_\theta(S,Z)$ is bounded away from $0$ regardless of other terms.
+Any global minimizer must pin $Y_{\min}\approx y_0$ (up to noise), not inflate it.
+The same argument covers $Y_{\max}=0$ or any fixed $c$ once $Y_{\min}\to\infty$ with $Y_{\min}\gg |c|$.
+What \emph{does} hold is joint scale invariance when $Y_{\min},Y_{\max}\to\infty$ together with fixed ratio $Y_{\max}/Y_{\min}$: then $\widetilde{H}$ and $\mathcal{L}$ are unchanged.
+
+\paragraph{$Y_{\max}=Y_{\min}$ (flat curve).}
+If $Y_{\max}=Y_{\min}$, then $H(x;\mu)=Y_{\min}$ for every $x$, so $\widetilde{H}(x;\mu)\equiv 1$ and $\mathrm{fold}_\mu=1$.
+Each residual reduces to $(y/Y_{\min}-1)^2$.
+This is \emph{not} a global minimizer whenever the data require $\mathrm{fold}(S)\neq 1$ or a nontrivial transition shape: fixed $y>0$ and $Y_{\min}\to\infty$ give $(y/Y_{\min}-1)^2\to 1$, while a non-flat fit can do strictly better.
+It is nonetheless a \emph{spurious critical point}: for $Y_{\max}=Y_{\min}$ large, $\partial\ell/\partial Y_{\min}\to 0$ even though $\ell\to 1$, so optimization can stall on a flat, wrong plateau.
+Enforcing a minimum dynamic range, e.g.\ $Y_{\max}\ge Y_{\min}+\delta$ with $\delta>0$ fixed or learned with a floor, removes this family.
+
+\paragraph{$Y_{\min}\to 0^+$.}
+Since $H(0;\mu)=Y_{\min}$, sending $Y_{\min}\to 0$ with fixed $y_0>0$ drives $(y_0/Y_{\min}-1)^2\to\infty$, so the $x=0$ anchor penalizes collapse of the basal level.
+Positivity of outputs is necessary but not sufficient: a lower bound $Y_{\min}\ge y_{\min}>0$ (or softplus with a floor) is the practical safeguard.
+
+\paragraph{Scale inflation with fixed shape.}
+If $Y_{\min},Y_{\max}\to\infty$ while $Y_{\max}/Y_{\min}$ and $(K_{1/2},n)$ stay fixed, then $\widetilde{H}(\cdot;\mu)$---and hence $\mathcal{L}$---is unchanged.
+The loss is designed to be blind to joint scale; only failures that distort $\widetilde{H}$ (flat curve, vanishing basal) or decouple $H(0)$ from the $H(x)$ scale are problematic.
+\end{rmk}
 
 % Appendices (uncomment when ready)
 %\appendix
