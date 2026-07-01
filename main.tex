@@ -87,6 +87,25 @@ When $Z=\{(0,y_0),(1,y_1)\}$,
 \end{align*}
 Interior points enter through the same $\ell$ with weight $1/|Z|$ and constrain $K_{1/2}$ and $n$ via $\widetilde{H}$.
 
+\paragraph{Optional basal anchor.}
+The main loss is blind to joint scaling of $(Y_{\min},Y_{\max})$, as $\mathrm{fold}(s)$ itself is.
+If absolute basal level $Y_{\min}(S)=H(0;f_H(S))$ must be identified, reuse the $x=0$ observation with
+\begin{align*}
+    \ell_{\mathrm{base}}(\mu_{\theta}(S),y_0)
+     & \defeq \left(\frac{y_0}{H(0;\mu_{\theta}(S))} - 1\right)^2,
+\end{align*}
+which vanishes when $H(0;\mu_{\theta}(S))=y_0$.
+Define the hybrid per-set loss by applying $\ell_{\mathrm{base}}$ at $x=0$ and $\ell$ elsewhere:
+\begin{align*}
+    \ell^{\mathrm{hyb}}_{\theta}(S,Z)
+     & \defeq \frac{1}{|Z|}\left[
+        \ell_{\mathrm{base}}(\mu_{\theta}(S),y_0)
+        + \sum_{(x,y)\in Z,\, x\neq 0} \ell(y,x,y_0;\mu_{\theta}(S))
+        \right].
+\end{align*}
+For $Z=\{(0,y_0),(1,y_1)\}$, this splits evenly between basal and fold error.
+The basal term uses $H(0;\mu_{\theta})$ only at $x=0$, with fixed $y_0$, so inflating $H(0;\mu_{\theta})\to\infty$ still drives $\ell_{\mathrm{base}}\to 1$, not~$0$.
+
 \section{Constraints}
 Enforce $Y_{\min}(S)>0$ and $H(x;\mu_{\theta}(S))>0$ (e.g.\ softplus outputs with a floor).
 Require a minimum dynamic range $Y_{\max}\ge Y_{\min}+\delta$ for $\delta>0$ so the curve cannot collapse to flat.
