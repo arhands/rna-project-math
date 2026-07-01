@@ -18,6 +18,47 @@
 \begin{document}
 
 \maketitle
+\section{Hill Function Learning}
+Let $\Omega_S$ be a space of model inputs (in our case, typically RNA sequences, primary and secondary structures, etc.).
+\newcommand{\distr}{\rho}
+
+% Similarly, given an explicit input $s\in\Omega_S$, let $\distr_s:\RR\to\RR$ be the distribution of fold values for that input.
+
+There exists a function $f_{H}:\Omega_S\to\RR^4$ s.t. $f_{H}(s)=(Y_{\min}(s),Y_{\max}(s),K_{1/2}(s),n(s))$ gives the parameterization of a Hill curve for input $s$.
+
+Said hill curve is defined by
+\begin{align*}
+    H(x;Y_{\min},Y_{\max},K_{1/2},n) & = Y_{\min} + \frac{Y_{\max} - Y_{\min}}{1 + \left(\frac{K_{1/2}}{x}\right)^n} \\
+                                     & = Y_{\min} + (Y_{\max} - Y_{\min})\sigma\left(n\log\frac{x}{K_{1/2}}\right)   \\
+                                     & = H(x;f_{H}(s))                                                               \\
+                                     & = H(x;s)
+    \intertext{A related value is the fold value, defined as}
+    \text{fold}(s)                   & = \frac{H(1;s)}{H(0;s)}
+\end{align*}
+\iffalse
+    In practice, our data is distributed according to some $(S, Z)\sim \distr:\Omega_S\times\Pc(\RR^2)\to\RR$, where $Z$ is a set of observations on the curve $H(\cdot;S)$, with some added noise. We are given that $(0,\cdot)$ and $(1,\cdot)$ will always be present in $Z$, but sometimes other points also appear in $Z$, which we could potentially take advantage of. To do this, define the learning model $\mu_{\theta}:\Omega_S\to\RR^3$ s.t. $\mu_{\theta}(s)\approx f_{H}(s)$.
+
+    Then, consider the loss function
+    \begin{align*}
+        \mathcal{L}(\theta) & = \expect[(S,Z)]{
+            \sum_{(x,y)\in Z} \left(y - H(x;\mu_{\theta}(s))\right)^2
+        }
+    \end{align*}
+\fi
+In practice, our data is distributed according to some $(S, X,Z)\sim \distr:\Omega_S\times\RR\times\RR\to\RR$, where $Y=H(X;f_H(S))+Z$ is the observed fractional bound at concentration $X$ for input $S$, and $Z$. Note that $Z$ for any fixed $S$ and $X$ has mean $0$.\\
+Then, consider the loss function
+\begin{align*}
+    \mathcal{L}(\theta) & = \expect{
+        \left(Y - H(X;\mu_{\theta}(S))\right)^2
+    }                                         \\
+                        & = \expect[(S,X,Z)]{
+        \left(H(X;f_H(S)) + Z - H(X;\mu_{\theta}(S))\right)^2
+    }                                         \\
+    \intertext{Assuming $Z$ is linearly independent of $H(X;f_H(S))- H(X;\mu_{\theta}(S))$, we have}
+                        & = \expect{
+        \left(H(X;f_H(S)) - H(X;\mu_{\theta}(S))\right)^2
+    } + \var{Z}                               \\
+\end{align*}
 
 % Appendices (uncomment when ready)
 %\appendix
