@@ -1,5 +1,6 @@
 \documentclass{article}
 \usepackage{style}
+\usepackage{hyperref}
 \usepackage{cleveref}
 \setlength{\parindent}{0pt}
 \newcommand{\distr}{\rho}
@@ -8,6 +9,7 @@
 \newtheorem{prop}{Proposition}
 \theoremstyle{remark}
 \newenvironment{proofSketch}{\noindent\textbf{Proof sketch:}}{\hfill\\}
+\newtheorem*{rmk}{Remark}
 
 \title{Hill Function Learning}
 
@@ -28,6 +30,7 @@ with basal level $H(0;s)\defeq Y_{\min}(s)$ and fold value $\mathrm{fold}(s)=H(1
 The predictor is $\mu_{\theta}:\Omega_S\to\RR^4$ with $\mu_{\theta}(s)\approx f_{H}(s)$.
 
 \section{Data}
+\label{sec:data}
 Each input $S\in\Omega_S$ is now a random element (drawn, jointly with $Z$, from $\distr$), in contrast to the deterministic $s\in\Omega_S$ above; $S$ comes with noisy observations
 \[
     Z = \{(x_j, y_j)\}_{j=1}^{m(S)} \subset \RR_{\ge0} \times \RR,
@@ -35,10 +38,10 @@ Each input $S\in\Omega_S$ is now a random element (drawn, jointly with $Z$, from
 \]
 where $(0,y_0)$ and $(1,y_1)$ are always present and additional concentrations may appear.
 Each pair satisfies $y = H(x;f_H(S)) + \varepsilon$ with $\expect{\varepsilon}=0$ for each fixed $(S,x)$ and independent $\varepsilon$ across points.
-We assume $Y_{\min}(S)$ is bounded away from zero relative to the noise scale (so $y_0>0$ with high probability), since \S3 divides by $y_0$.
+We assume $Y_{\min}(S)$ is bounded away from zero relative to the noise scale (so $y_0>0$ with high probability), since \cref{sec:relative-curve} divides by $y_0$.
 % TODO: verify — confirm with collaborators that basal signal is bounded away from zero relative to assay noise
 
-\section{Relative-curve loss}
+\section{Relative-curve loss}\label{sec:relative-curve}
 Normalize by the mandatory basal observation $y_0$ from $(0,y_0)\in Z$:
 \begin{align*}
     \widetilde{H}(x;\mu_{\theta}(S))
@@ -55,13 +58,13 @@ with per-set mean $\ell_{\theta}(S,Z)\defeq |Z|^{-1}\sum_{(x,y)\in Z}\ell(y,x,y_
 Averaging by $|Z|$ gives each input equal weight; interior $(x,y)$ use the same kernel with weight $1/|Z|$.
 The data side uses $H(0;f_H(S))$ (via $y_0$), not $H(0;\mu_{\theta}(S))$; because $y_0$ is itself noisy, this normalization biases the target, made precise next.
 \begin{prop}[Leading-order bias from noisy normalization]\label{prop:ratio-bias}
-Let $H_0(S)\defeq H(0;f_H(S))$, $H_x(S)\defeq H(x;f_H(S))$, and $r(S,x)\defeq H_x(S)/H_0(S)$ (the true relative curve). Write $y_0 = H_0(S)(1+u)$ with $u\defeq\varepsilon_0/H_0(S)$ and $\mathrm{Var}(\varepsilon_0)=\sigma_0^2(S)$. Then, to leading order in $\sigma_0^2(S)/H_0(S)^2$,
+Let $H_0(S)\defeq H(0;f_H(S))$, $H_x(S)\defeq H(x;f_H(S))$, and $r(S,x)\defeq H_x(S)/H_0(S)$ (the true relative curve). Write $y_0 = H_0(S)(1+u)$ with $u\defeq\varepsilon_0/H_0(S)$ and $\mathrm{Var}(\varepsilon_0)=\sigma_0^2(S)$. Assume $|u|\le\kappa(S)$ almost surely for a constant $\kappa(S)\in[0,1)$ — i.e.\ basal noise is a bounded fraction of true basal signal, so $y_0\ge(1-\kappa(S))H_0(S)>0$ surely. (This strengthens \cref{sec:data}'s $y_0>0$-with-high-probability assumption to a hard margin; it is also what makes the expectation below well-defined, \cref{app:proof-ratio-bias}.) Then, exactly,
 \[
-    \expect{y/y_0 \mid S,x} \approx r(S,x)\left(1+\frac{\sigma_0^2(S)}{H_0(S)^2}\right).
+    \expect{y/y_0 \mid S,x} = r(S,x)\left(1+\frac{\sigma_0^2(S)}{H_0(S)^2}\right)\big(1+\eta(S)\big), \qquad |\eta(S)| \le \frac{\kappa(S)}{1-\kappa(S)}\cdot\frac{\sigma_0^2(S)}{H_0(S)^2}.
 \]
 \end{prop}
 \begin{proofSketch}
-Independence of $\varepsilon_x$ and $u$ gives $\expect{y/y_0\mid S,x} = r(S,x)\cdot\expect{(1+u)^{-1}}$ exactly. Taylor-expanding $(1+u)^{-1}\approx 1-u+u^2$ and taking expectations, with $\expect{u}=0$ and $\expect{u^2}=\sigma_0^2(S)/H_0(S)^2$, yields the claim. Full proof in \cref{app:proof-ratio-bias}.
+Independence of $\varepsilon_x$ and $u$ gives $\expect{y/y_0\mid S,x} = r(S,x)\cdot\expect{(1+u)^{-1}}$ exactly. The identity $(1+u)^{-1}=1-u+u^2-u^3/(1+u)$ is algebraic, not a truncated series, so taking expectations gives $\expect{(1+u)^{-1}} = 1+\sigma_0^2(S)/H_0(S)^2-\expect{u^3/(1+u)}$ exactly; bounding the last term using $|u|\le\kappa(S)$ yields the stated $|\eta(S)|$. Full proof in \cref{app:proof-ratio-bias}.
 \end{proofSketch}
 So $\mathcal{L}(\theta)$ targets, to leading order, a per-$S$ \emph{multiplicative} rescaling of $r(S,\cdot)$ by $(1+\sigma_0^2(S)/H_0(S)^2)$ — not $r(S,\cdot)$ plus a flat, $\theta$-independent additive noise term, since division by the noisy $y_0$ is nonlinear (Jensen's inequality: $\expect{y/y_0}\neq\expect{y}/\expect{y_0}$ in general).
 The $x=0$ term vanishes since $y_0/y_0=\widetilde{H}(0;\mu_{\theta})=1$.
