@@ -1,6 +1,13 @@
 \documentclass{article}
 \usepackage{style}
+\usepackage{cleveref}
 \setlength{\parindent}{0pt}
+\newcommand{\distr}{\rho}
+
+\theoremstyle{plain}
+\newtheorem{prop}{Proposition}
+\theoremstyle{remark}
+\newenvironment{proofSketch}{\noindent\textbf{Proof sketch:}}{\hfill\\}
 
 \title{Hill Function Learning}
 
@@ -9,7 +16,6 @@
 \maketitle
 \section{Setup}
 Let $\Omega_S$ be a space of model inputs (RNA sequences, primary and secondary structures, etc.).
-\newcommand{\distr}{\rho}
 
 There exists $f_{H}:\Omega_S\to\RR^4$ with $f_{H}(s)=(Y_{\min}(s),Y_{\max}(s),K_{1/2}(s),n(s))$ parameterizing, for $x>0$,
 \begin{align*}
@@ -18,16 +24,19 @@ There exists $f_{H}:\Omega_S\to\RR^4$ with $f_{H}(s)=(Y_{\min}(s),Y_{\max}(s),K_
      = H(x;f_{H}(s)) = H(x;s),
 \end{align*}
 with basal level $H(0;s)\defeq Y_{\min}(s)$ and fold value $\mathrm{fold}(s)=H(1;s)/H(0;s)$.
+% TODO: verify — confirm x=1 is intended as a fixed reference concentration on a common normalized scale across all S (rather than an arbitrary/data-set-specific unit)
 The predictor is $\mu_{\theta}:\Omega_S\to\RR^4$ with $\mu_{\theta}(s)\approx f_{H}(s)$.
 
 \section{Data}
-Each input $S$ comes with noisy observations
+Each input $S\in\Omega_S$ is now a random element (drawn, jointly with $Z$, from $\distr$), in contrast to the deterministic $s\in\Omega_S$ above; $S$ comes with noisy observations
 \[
-    Z = \{(x_j, y_j)\}_{j=1}^{m(S)} \subset \RR_{>0} \times \RR,
+    Z = \{(x_j, y_j)\}_{j=1}^{m(S)} \subset \RR_{\ge0} \times \RR,
     \qquad (S,Z)\sim\distr,
 \]
-where $(0,y_0)$ and $(1,y_1)$ are always present and interior concentrations may appear.
-Each pair satisfies $y = H(x;f_H(S)) + \varepsilon$ with $\expect{}{\varepsilon}=0$ for each fixed $(S,x)$ and independent $\varepsilon$ across points.
+where $(0,y_0)$ and $(1,y_1)$ are always present and additional concentrations may appear.
+Each pair satisfies $y = H(x;f_H(S)) + \varepsilon$ with $\expect{\varepsilon}=0$ for each fixed $(S,x)$ and independent $\varepsilon$ across points.
+We assume $Y_{\min}(S)$ is bounded away from zero relative to the noise scale (so $y_0>0$ with high probability), since \S3 divides by $y_0$.
+% TODO: verify — confirm with collaborators that basal signal is bounded away from zero relative to assay noise
 
 \section{Relative-curve loss}
 Normalize by the mandatory basal observation $y_0$ from $(0,y_0)\in Z$:
@@ -44,7 +53,17 @@ The per-point kernel is
 \end{align*}
 with per-set mean $\ell_{\theta}(S,Z)\defeq |Z|^{-1}\sum_{(x,y)\in Z}\ell(y,x,y_0;\mu_{\theta}(S))$ and population loss $\mathcal{L}(\theta)\defeq\expect[(S,Z)]{\ell_{\theta}(S,Z)}$.
 Averaging by $|Z|$ gives each input equal weight; interior $(x,y)$ use the same kernel with weight $1/|Z|$.
-Under mean-zero noise, $\mathcal{L}(\theta)$ equals mean squared error on true relative curves $H(x;f_H(S))/H(0;f_H(S))$ plus a $\theta$-independent noise term; the data side uses $H(0;f_H(S))$, not $H(0;\mu_{\theta}(S))$.
+The data side uses $H(0;f_H(S))$ (via $y_0$), not $H(0;\mu_{\theta}(S))$; because $y_0$ is itself noisy, this normalization biases the target, made precise next.
+\begin{prop}[Leading-order bias from noisy normalization]\label{prop:ratio-bias}
+Let $H_0(S)\defeq H(0;f_H(S))$, $H_x(S)\defeq H(x;f_H(S))$, and $r(S,x)\defeq H_x(S)/H_0(S)$ (the true relative curve). Write $y_0 = H_0(S)(1+u)$ with $u\defeq\varepsilon_0/H_0(S)$ and $\mathrm{Var}(\varepsilon_0)=\sigma_0^2(S)$. Then, to leading order in $\sigma_0^2(S)/H_0(S)^2$,
+\[
+    \expect{y/y_0 \mid S,x} \approx r(S,x)\left(1+\frac{\sigma_0^2(S)}{H_0(S)^2}\right).
+\]
+\end{prop}
+\begin{proofSketch}
+Independence of $\varepsilon_x$ and $u$ gives $\expect{y/y_0\mid S,x} = r(S,x)\cdot\expect{(1+u)^{-1}}$ exactly. Taylor-expanding $(1+u)^{-1}\approx 1-u+u^2$ and taking expectations, with $\expect{u}=0$ and $\expect{u^2}=\sigma_0^2(S)/H_0(S)^2$, yields the claim. Full proof in \cref{app:proof-ratio-bias}.
+\end{proofSketch}
+So $\mathcal{L}(\theta)$ targets, to leading order, a per-$S$ \emph{multiplicative} rescaling of $r(S,\cdot)$ by $(1+\sigma_0^2(S)/H_0(S)^2)$ — not $r(S,\cdot)$ plus a flat, $\theta$-independent additive noise term, since division by the noisy $y_0$ is nonlinear (Jensen's inequality: $\expect{y/y_0}\neq\expect{y}/\expect{y_0}$ in general).
 The $x=0$ term vanishes since $y_0/y_0=\widetilde{H}(0;\mu_{\theta})=1$.
 When $Z=\{(0,y_0),(1,y_1)\}$,
 \begin{align*}
@@ -70,8 +89,11 @@ and define
 For $Z=\{(0,y_0),(1,y_1)\}$, basal and fold error each receive weight $\tfrac12$; $\ell_{\mathrm{base}}\not\to 0$ when $H(0;\mu_{\theta})\to\infty$ with fixed $y_0$.
 
 \section{Constraints}
-Enforce $Y_{\min},K_{1/2}>0$ and $H(x;\mu_{\theta}(S))>0$ (e.g.\ softplus outputs with a floor).
+Enforce $Y_{\min},K_{1/2}>0$, $n>0$, and $H(x;\mu_{\theta}(S))>0$ (e.g.\ softplus outputs with a floor); $n>0$ is what makes $H(0;s)\defeq Y_{\min}(s)$ the continuous limit of $H(x;s)$ as $x\to0^+$, rather than an arbitrary convention (for $n<0$ the limit is $Y_{\max}(s)$ instead).
 Require $Y_{\max}\ge Y_{\min}+\delta$ for $\delta>0$.
 Joint inflation of $(Y_{\min},Y_{\max})$ leaves $\widetilde{H}$ unchanged; $y_0$ fixes the data-side scale in both $\mathcal{L}$ and $\ell^{\mathrm{hyb}}_{\theta}$.
+
+\appendix
+\input{appendices/proofs}
 
 \end{document}

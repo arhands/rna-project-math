@@ -6,10 +6,24 @@
 \section{Proofs}
 \label{app:proofs}
 
-% Add one subsection per theorem, following this pattern:
-%
-% \subsection{Proof of \cref{thm:name}}
-% \label{app:proof-thm-name}
-% \begin{pf}
-%   ...
-% \end{pf}
+\subsection{Proof of \cref{prop:ratio-bias}}
+\label{app:proof-ratio-bias}
+\begin{pf}
+Write $y = H_x(S) + \varepsilon_x$ and $y_0 = H_0(S)(1+u)$ with $u\defeq\varepsilon_0/H_0(S)$, where $\varepsilon_x,\varepsilon_0$ are independent, mean zero, and $\mathrm{Var}(\varepsilon_0)=\sigma_0^2(S)$; in particular $\varepsilon_x$ and $u$ are independent. Then
+\[
+    \frac{y}{y_0} = \frac{H_x(S)+\varepsilon_x}{H_0(S)}\cdot(1+u)^{-1}.
+\]
+Since $(H_x(S)+\varepsilon_x)$ and $(1+u)^{-1}$ are independent (conditional on $S,x$), the expectation of the product factors exactly:
+\[
+    \expect{y/y_0\mid S,x} = \frac{1}{H_0(S)}\expect{H_x(S)+\varepsilon_x}\cdot\expect{(1+u)^{-1}} = r(S,x)\cdot\expect{(1+u)^{-1}},
+\]
+using $\expect{\varepsilon_x}=0$ and $r(S,x)=H_x(S)/H_0(S)$. It remains to approximate $\expect{(1+u)^{-1}}$. Taylor-expanding $g(u)\defeq(1+u)^{-1}$ about $u=0$ (delta method) gives $g(u) = 1 - u + u^2 + \Oh(u^3)$ for $|u|<1$. Taking expectations,
+\[
+    \expect{(1+u)^{-1}} = 1 - \expect{u} + \expect{u^2} + \Oh\!\left(\expect{u^3}\right) = 1 + \frac{\sigma_0^2(S)}{H_0(S)^2} + \Oh\!\left(\left(\frac{\sigma_0^2(S)}{H_0(S)^2}\right)^{3/2}\right),
+\]
+using $\expect{u}=0$ and $\expect{u^2}=\mathrm{Var}(u)=\sigma_0^2(S)/H_0(S)^2$. Dropping the higher-order remainder and substituting back,
+\[
+    \expect{y/y_0\mid S,x} \approx r(S,x)\left(1+\frac{\sigma_0^2(S)}{H_0(S)^2}\right),
+\]
+to leading order in $\sigma_0^2(S)/H_0(S)^2$. The approximation requires $\sigma_0^2(S)/H_0(S)^2$ small enough for the second-order Taylor remainder to be negligible and for $(1+u)^{-1}$ to have finite low-order moments (guaranteed, e.g., if $u$ is sub-Gaussian or otherwise light-tailed and $H_0(S)$ is bounded away from $0$).
+\end{pf}
