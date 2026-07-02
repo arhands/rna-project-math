@@ -49,6 +49,13 @@ Normalize by the mandatory basal observation $y_0$ from $(0,y_0)\in Z$:
     \qquad
     \mathrm{fold}_\mu(S) \defeq \widetilde{H}(1;\mu_{\theta}(S)).
 \end{align*}
+\begin{rmk}[Reduced dependence of the fold curve]
+Writing $w(x)\defeq\big(1+(K_{1/2}/x)^n\big)^{-1}\in(0,1)$ for $x>0$, the Hill function is $H(x;Y_{\min},Y_{\max},K_{1/2},n)=Y_{\min}(1-w(x))+Y_{\max}\,w(x)$, so
+\[
+    \widetilde{H}(x;\mu_{\theta}(S)) = 1+(\gamma-1)\,w(x), \qquad \gamma\defeq Y_{\max}/Y_{\min},
+\]
+depends on $\mu_{\theta}(S)\in\RR^4$ only through the triple $(\gamma,K_{1/2},n)$ — one fewer degree of freedom. Hence $\ell$, $\ell_{\theta}$, and $\mathcal{L}(\theta)$ depend on $\mu_{\theta}(S)$ only through $(\gamma,K_{1/2},n)$: $Y_{\min}$ and $Y_{\max}$ individually are unidentifiable from $\mathcal{L}(\theta)$ alone, only their ratio is. A natural architectural fix is to have $\mu_{\theta}$ output $\gamma$ directly (e.g.\ $1+\mathrm{softplus}(\cdot)$), replacing the joint constraint $Y_{\max}\ge Y_{\min}+\delta$ (\cref{sec:constraints}) with a single $\gamma\ge1+\delta'$ on one scalar; if the basal anchor below is also wanted, keep a separate scalar head for $Y_{\min}$, since $\ell_{\mathrm{base}}$ needs $Y_{\min}=H(0;\mu_{\theta}(S))$ directly and cannot be recovered from $\gamma$ alone.
+\end{rmk}
 The per-point kernel is
 \begin{align*}
     \ell(y,x,y_0;\mu_{\theta}(S))
@@ -75,7 +82,7 @@ When $Z=\{(0,y_0),(1,y_1)\}$,
 Interior points constrain $K_{1/2}$ and $n$ through $\widetilde{H}$.
 
 \paragraph{Optional basal anchor.}
-The main loss is invariant to joint scaling of $(Y_{\min},Y_{\max})$, as is $\mathrm{fold}(s)$.
+As noted above, the main loss is invariant to joint scaling of $(Y_{\min},Y_{\max})$, as is $\mathrm{fold}(s)$.
 If absolute basal $Y_{\min}(S)=H(0;f_H(S))$ must be identified, replace the vacuous $x=0$ relative term with
 \begin{align*}
     \ell_{\mathrm{base}}(\mu_{\theta}(S),y_0)
@@ -92,8 +99,9 @@ and define
 For $Z=\{(0,y_0),(1,y_1)\}$, basal and fold error each receive weight $\tfrac12$; $\ell_{\mathrm{base}}\not\to 0$ when $H(0;\mu_{\theta})\to\infty$ with fixed $y_0$.
 
 \section{Constraints}
+\label{sec:constraints}
 Enforce $Y_{\min},K_{1/2}>0$, $n>0$, and $H(x;\mu_{\theta}(S))>0$ (e.g.\ softplus outputs with a floor); $n>0$ is what makes $H(0;s)\defeq Y_{\min}(s)$ the continuous limit of $H(x;s)$ as $x\to0^+$, rather than an arbitrary convention (for $n<0$ the limit is $Y_{\max}(s)$ instead).
-Require $Y_{\max}\ge Y_{\min}+\delta$ for $\delta>0$.
+Require $Y_{\max}\ge Y_{\min}+\delta$ for $\delta>0$ (equivalently $\gamma\ge1+\delta/Y_{\min}$, or a direct $\gamma\ge1+\delta'$ if $\mu_{\theta}$ outputs $\gamma$ per the remark above).
 Joint inflation of $(Y_{\min},Y_{\max})$ leaves $\widetilde{H}$ unchanged; $y_0$ fixes the data-side scale in both $\mathcal{L}$ and $\ell^{\mathrm{hyb}}_{\theta}$.
 
 \appendix
